@@ -1,10 +1,10 @@
 #include <Adafruit_NeoPixel.h>
 // #include <LiquidCrystal.h>
 
-//#define DEBUG
+#define DEBUG
 
 #define LED_PIN 6
-#define LED_COUNT 110
+#define LED_COUNT 100
 
 Adafruit_NeoPixel strip(LED_COUNT, LED_PIN, NEO_RGB + NEO_KHZ800);
 
@@ -13,135 +13,162 @@ const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 
 class Programme
 {
-  protected:
-    char *name;
+protected:
+  char *name;
 
-  public:
-    Programme(char *name) {
-      this->name = name;
-    };
-    virtual void display(uint32_t) = 0;
+public:
+  Programme(char *name)
+  {
+    this->name = name;
+  };
+  virtual void display(uint32_t) = 0;
 
-    const char *get_name() {
-      return name;
-    }
+  const char *get_name()
+  {
+    return name;
+  }
 };
 
-class Off: public Programme
+class Off : public Programme
 {
-  public:
-    Off(char *name) : Programme(name) {}
+public:
+  Off(char *name) : Programme(name) {}
 
-    void display(uint32_t count) {
-      strip.clear();
-    }
+  void display(uint32_t count)
+  {
+    strip.clear();
+  }
 };
 
-class Runner: public Programme
+class Runner : public Programme
 {
-  public:
-    Runner(char *name) : Programme(name) {}
+public:
+  Runner(char *name) : Programme(name) {}
 
-    void display(uint32_t count) {
-      strip.setPixelColor(count % LED_COUNT, 0, 0, 0);
-      strip.setPixelColor((count + 1) % LED_COUNT, 32, 32, 32);
-    }
+  void display(uint32_t count)
+  {
+    strip.setPixelColor(count % LED_COUNT, 0, 0, 0);
+    strip.setPixelColor((count + 1) % LED_COUNT, 32, 32, 32);
+  }
 };
 
-class RandomTwinkle: public Programme
+class RandomTwinkle : public Programme
 {
-  public:
-    RandomTwinkle(char *name) : Programme(name) {}
+public:
+  RandomTwinkle(char *name) : Programme(name) {}
 
-    void display(uint32_t count) {
-      if (count % 10 == 0) {
-        for (int i = 0; i < LED_COUNT; i++) {
-          strip.setPixelColor(i, random(32), random(32), random(32));
-        }
+  void display(uint32_t count)
+  {
+    if (count % 10 == 0)
+    {
+      for (int i = 0; i < LED_COUNT; i++)
+      {
+        strip.setPixelColor(i, random(32), random(32), random(32));
       }
     }
+  }
 };
 
 class HalloweenTwinkle : public Programme
 {
-  public:
-    HalloweenTwinkle(char *name) : Programme(name) {}
+public:
+  HalloweenTwinkle(char *name) : Programme(name) {}
 
-    void display(uint32_t count) {
-      if (count % 10 == 0) {
-        for (int i = 0; i < LED_COUNT; i++) {
-          strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(65536 / 12, 255, random(32) + 64)));
-        }
+  void display(uint32_t count)
+  {
+    if (count % 10 == 0)
+    {
+      for (int i = 0; i < LED_COUNT; i++)
+      {
+        strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(65536 / 12, 255, random(32) + 64)));
       }
     }
+  }
 };
 
 class XmasTwinkle : public Programme
 {
-  public:
-    XmasTwinkle(char *name) : Programme(name) {}
+public:
+  XmasTwinkle(char *name) : Programme(name) {}
 
-    void display(uint32_t count) {
-      if (count % 10 == 0) {
-        for (int i = 0; i < LED_COUNT; i++) {
-          switch (random(3)) {
-            case 0:
-              strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(            0, 255, random(32) + 64)));
-              break;
-            case 1:
-              strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(65536 * 1 / 3, 255, random(32) + 64)));
-              break;
-            case 2:
-              strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(65536 * 2 / 3, 255, random(32) + 64)));
-              break;
-          }
+  void display(uint32_t count)
+  {
+    if (count % 10 == 0)
+    {
+      for (int i = 0; i < LED_COUNT; i++)
+      {
+        switch (random(3))
+        {
+        case 0:
+          strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(0, 255, random(32) + 64)));
+          break;
+        case 1:
+          strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(65536 * 1 / 3, 255, random(32) + 64)));
+          break;
+        case 2:
+          strip.setPixelColor(i, strip.gamma32(strip.ColorHSV(65536 * 2 / 3, 255, random(32) + 64)));
+          break;
         }
       }
     }
+  }
 };
 
 class Sprites : public Programme
 {
-  private:
+private:
+  struct sprite
+  {
+    int pos;
+    int vel;
+    int acc;
+    uint16_t hue;
+    uint8_t sat;
+  };
 
-    struct sprite {
-      int pos;
-      int vel;
-      int acc;
-    };
+  struct sprite s[6] = {
+      {(int)random(LED_COUNT), 1, 0, 0, 255},
+      {(int)random(LED_COUNT), 2, 0, 65536 * 1 / 3, 255},
+      {(int)random(LED_COUNT), 3, 0, 65536 * 2 / 3, 255},
+      {(int)random(LED_COUNT), -1, 0, 65536 * 1 / 3, 255},
+      {(int)random(LED_COUNT), -2, 0, 65536 * 2 / 3, 255},
+      {(int)random(LED_COUNT), -3, 0, 65536 * 0 / 3, 255}};
 
-    struct sprite s[3] = {
-      {0, 3, 0},
-      {LED_COUNT / 3, -1, 0},
-      {LED_COUNT / 3, -2, 0}
-    };
-
-    int add(int a, int b) {
-      a += b;
-      while (a >= LED_COUNT) {
-        a -= LED_COUNT;
-      }
-      while (a < 0) {
-        a += LED_COUNT;
-      }
-      return a;
+  int add(int a, int b)
+  {
+    a += b;
+    while (a >= LED_COUNT)
+    {
+      a -= LED_COUNT;
     }
+    while (a < 0)
+    {
+      a += LED_COUNT;
+    }
+    return a;
+  }
 
-  public:
-    Sprites(char *name) : Programme(name) {}
+public:
+  Sprites(char *name) : Programme(name)
+  {
+  }
 
-    void display(uint32_t count) {
-      if (count % 5 == 0) {
-        strip.clear();
-        for (int i = 0; i < 3; i++) {
-          s[i].pos = add(s[i].pos, s[i].vel);
-          for (int j = 0; j < 6; j++) {
-            strip.setPixelColor(add(s[i].pos,  j), 0, 0, 1 << (6 - j));
-            strip.setPixelColor(add(s[i].pos, -j), 0 ,0, 1 << (6 - j));
-          }
+  void display(uint32_t count)
+  {
+    if (count % 5 == 0)
+    {
+      strip.clear();
+      for (int i = 0; i < 6; i++)
+      {
+        s[i].pos = add(s[i].pos, s[i].vel);
+        for (int j = 0; j < 6; j++)
+        {
+          strip.setPixelColor(add(s[i].pos, j), strip.gamma32(strip.ColorHSV(s[i].hue, s[i].sat, 3 << (6 - j))));
+          strip.setPixelColor(add(s[i].pos, -j), strip.gamma32(strip.ColorHSV(s[i].hue, s[i].sat, 3 << (6 - j))));
         }
       }
     }
+  }
 };
 
 RandomTwinkle random_twinkle("random twinkle");
@@ -156,7 +183,8 @@ Programme *prog_list[] = {&sprites};
 
 int num_progs = sizeof(prog_list) / sizeof(*prog_list);
 
-void setup() {
+void setup()
+{
 #ifdef DEBUG
   Serial.begin(9600);
 #endif
@@ -171,9 +199,11 @@ char buf[32];
 uint32_t count = 0;
 int prog = 0;
 
-void loop() {
+void loop()
+{
 
-  if (count % 1000 == 0) {
+  if (count % 1000 == 0)
+  {
     prog = (prog + 1) % num_progs;
     // lcd.clear();
     sprintf(buf, "%s", prog_list[prog]->get_name());
