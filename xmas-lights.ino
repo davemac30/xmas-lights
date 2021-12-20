@@ -1,7 +1,7 @@
 #include <Adafruit_NeoPixel.h>
 // #include <LiquidCrystal.h>
 
-#define DEBUG
+// #define DEBUG
 
 #define LED_PIN 6
 #define LED_COUNT 100
@@ -119,22 +119,21 @@ class Sprites : public Programme
 private:
   struct sprite
   {
-    int pos;
-    int vel;
-    int acc;
+    double pos;
+    double vel;
     uint16_t hue;
     uint8_t sat;
   };
 
   struct sprite s[6] = {
-      {(int)random(LED_COUNT), 1, 0, 0, 255},
-      {(int)random(LED_COUNT), 2, 0, 65536 * 1 / 3, 255},
-      {(int)random(LED_COUNT), 3, 0, 65536 * 2 / 3, 255},
-      {(int)random(LED_COUNT), -1, 0, 65536 * 1 / 3, 255},
-      {(int)random(LED_COUNT), -2, 0, 65536 * 2 / 3, 255},
-      {(int)random(LED_COUNT), -3, 0, 65536 * 0 / 3, 255}};
+      {(double)random(LED_COUNT), 0.1, 0, 0, 255},
+      {(double)random(LED_COUNT), 0.2, 0, 65536 * 1 / 3, 255},
+      {(double)random(LED_COUNT), 0.3, 0, 65536 * 2 / 3, 255},
+      {(double)random(LED_COUNT), -0.1, 0, 65536 * 1 / 3, 255},
+      {(double)random(LED_COUNT), -0.2, 0, 65536 * 2 / 3, 255},
+      {(double)random(LED_COUNT), -0.3, 0, 0, 255}};
 
-  int add(int a, int b)
+  double add(double a, double b)
   {
     a += b;
     while (a >= LED_COUNT)
@@ -148,6 +147,17 @@ private:
     return a;
   }
 
+  // distance between sprite (ps) and light (pl)
+  double distance(double ps, int pl)
+  {
+    double d = fabs(ps - pl);
+    if (d > (LED_COUNT / 2))
+    {
+      d = LED_COUNT - d;
+    }
+    return d;
+  }
+
 public:
   Sprites(char *name) : Programme(name)
   {
@@ -155,17 +165,17 @@ public:
 
   void display(uint32_t count)
   {
-    if (count % 5 == 0)
+    strip.clear();
+    for (uint16_t pl = 0; pl < LED_COUNT; pl++)
     {
-      strip.clear();
       for (int i = 0; i < 6; i++)
       {
         s[i].pos = add(s[i].pos, s[i].vel);
-        for (int j = 0; j < 6; j++)
-        {
-          strip.setPixelColor(add(s[i].pos, j), strip.gamma32(strip.ColorHSV(s[i].hue, s[i].sat, 3 << (6 - j))));
-          strip.setPixelColor(add(s[i].pos, -j), strip.gamma32(strip.ColorHSV(s[i].hue, s[i].sat, 3 << (6 - j))));
-        }
+        double d = distance(s[i].pod, pl) + 1.0; // add 1.0 to ensure we never divide by a number less than 1
+        double v = 255 / (d * d);                // inverse square
+        // merge, don't overwrite
+        uint32_t col = strip.getPixelColor(pl) | strip.gamma32(strip.ColorHSV(s[i].hue, s[i].sat, (uint8_t)v));
+        strip.setPixelColor(pl, col)
       }
     }
   }
@@ -194,7 +204,7 @@ void setup()
   // lcd.begin(16, 2);
 }
 
-char buf[32];
+// char buf[32];
 
 uint32_t count = 0;
 int prog = 0;
@@ -206,16 +216,17 @@ void loop()
   {
     prog = (prog + 1) % num_progs;
     // lcd.clear();
-    sprintf(buf, "%s", prog_list[prog]->get_name());
+    // sprintf(buf, "%s", prog_list[prog]->get_name());
     // lcd.print(buf);
 #ifdef DEBUG
     Serial.println(buf);
 #endif
   }
 
+  strip.clear();
   prog_list[prog]->display(count);
-
   strip.show();
+
   count++;
   delay(10);
 }
